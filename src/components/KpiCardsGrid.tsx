@@ -4,143 +4,132 @@ import {
   CheckCircle2,
   TrendingUp,
   XCircle,
-  Percent,
+  Filter,
   FileText,
   Briefcase,
-  Receipt,
-  ArrowUpRight,
-  ArrowDownRight,
+  DollarSign,
 } from 'lucide-react';
-import type { AggregatedMetrics } from '../types/analytics';
-import { calcDelta } from '../utils/formatters';
+import type { KpiMetrics } from '../types/analytics';
 
 interface KpiCardsGridProps {
-  curr: AggregatedMetrics;
-  prev: AggregatedMetrics;
+  kpis: KpiMetrics;
   diffDays: number;
   onCardClick: () => void;
 }
 
 export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({
-  curr,
-  prev,
+  kpis,
   diffDays,
   onCardClick,
 }) => {
-  const kpis = [
+  const cards = [
     {
       title: 'New Leads',
-      val: curr.totalLeads,
-      delta: calcDelta(curr.totalLeads, prev.totalLeads),
+      val: kpis.newLeads,
+      delta: kpis.newLeadsDelta,
       icon: Users,
       iconBg: 'bg-blue-50 text-blue-600',
     },
     {
       title: 'Qualified Leads',
-      val: curr.qualifiedLeads,
-      subVal: `${curr.totalLeads ? ((curr.qualifiedLeads / curr.totalLeads) * 100).toFixed(1) : 0}%`,
+      val: kpis.qualifiedLeads,
+      subVal: `${kpis.qualifiedPct}%`,
       subLabel: 'Qualified %',
-      delta: calcDelta(curr.qualifiedLeads, prev.qualifiedLeads),
+      delta: kpis.qualifiedDelta,
       icon: CheckCircle2,
       iconBg: 'bg-emerald-50 text-emerald-600',
     },
     {
       title: 'Converted Leads',
-      val: curr.convertedLeads,
-      subVal: `${curr.conversionRate}%`,
+      val: kpis.convertedLeads,
+      subVal: `${kpis.convertedPct}%`,
       subLabel: 'Conversion %',
-      delta: calcDelta(curr.convertedLeads, prev.convertedLeads),
+      delta: kpis.convertedDelta,
       icon: TrendingUp,
       iconBg: 'bg-teal-50 text-teal-600',
     },
     {
       title: 'Unqualified Leads',
-      val: curr.unqualifiedLeads,
-      subVal: `${curr.totalLeads ? ((curr.unqualifiedLeads / curr.totalLeads) * 100).toFixed(1) : 0}%`,
+      val: kpis.unqualifiedLeads,
+      subVal: `${kpis.unqualifiedPct}%`,
       subLabel: 'Unqualified %',
-      delta: calcDelta(curr.unqualifiedLeads, prev.unqualifiedLeads),
+      delta: kpis.unqualifiedDelta,
       icon: XCircle,
-      iconBg: 'bg-rose-50 text-rose-600',
+      iconBg: 'bg-rose-50 text-rose-500',
     },
     {
       title: 'Conversion Rate',
-      val: `${curr.conversionRate}%`,
-      delta: calcDelta(curr.conversionRate, prev.conversionRate),
-      icon: Percent,
+      val: `${kpis.conversionRate}%`,
+      delta: kpis.conversionRateDelta,
+      icon: Filter,
       iconBg: 'bg-cyan-50 text-cyan-600',
     },
     {
       title: 'Quotations Created',
-      val: curr.quotations.length,
-      delta: calcDelta(curr.quotations.length, prev.quotations.length),
+      val: kpis.quotationsCreated,
+      delta: kpis.quotationsDelta,
       icon: FileText,
       iconBg: 'bg-emerald-50 text-emerald-600',
     },
     {
       title: 'Deals Created',
-      val: curr.deals.length,
-      delta: calcDelta(curr.deals.length, prev.deals.length),
+      val: kpis.dealsCreated,
+      delta: kpis.dealsDelta,
       icon: Briefcase,
       iconBg: 'bg-purple-50 text-purple-600',
     },
     {
       title: 'Invoices Generated',
-      val: curr.invoicesCount,
-      delta: calcDelta(curr.invoicesCount, prev.invoicesCount),
-      icon: Receipt,
+      val: kpis.invoicesGenerated,
+      delta: kpis.invoicesDelta,
+      icon: DollarSign,
       iconBg: 'bg-emerald-50 text-emerald-600',
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2.5 sm:gap-3">
-      {kpis.map((kpi, idx) => {
-        const Icon = kpi.icon;
-        const isPos = kpi.delta >= 0;
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3">
+      {cards.map((c, i) => {
+        const Icon = c.icon;
         return (
           <div
-            key={idx}
+            key={i}
             onClick={onCardClick}
-            className="bg-white rounded-xl border border-slate-200/90 p-2.5 sm:p-3 shadow-2xs hover:shadow-md hover:border-blue-200 transition cursor-pointer flex flex-col justify-between min-w-0"
+            className="bg-white rounded-xl border border-slate-200/80 p-3 shadow-2xs hover:shadow-md transition cursor-pointer flex flex-col justify-between"
           >
-            {/* Card Title */}
-            <div className="flex items-start gap-1.5">
-              <div className={`p-1.5 rounded-lg shrink-0 ${kpi.iconBg}`}>
+            {/* Header */}
+            <div className="flex items-center gap-1.5">
+              <div className={`p-1 rounded-md shrink-0 ${c.iconBg}`}>
                 <Icon className="w-3.5 h-3.5" />
               </div>
-              <span className="text-[11px] font-semibold text-slate-600 leading-tight">
-                {kpi.title}
+              <span className="text-[11px] font-medium text-slate-600 leading-tight">
+                {c.title}
               </span>
             </div>
 
-            {/* Main Metric & Sub-percentage */}
-            <div className="my-2 flex items-baseline justify-between gap-1">
-              <span className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                {kpi.val}
+            {/* Value Row */}
+            <div className="my-2.5 flex items-baseline justify-between gap-1">
+              <span className="text-xl sm:text-[22px] font-extrabold text-slate-900 tracking-tight">
+                {c.val}
               </span>
-              {kpi.subVal && (
+              {c.subVal && (
                 <div className="text-right shrink-0">
-                  <div className="text-[11px] font-bold text-slate-800">{kpi.subVal}</div>
-                  <div className="text-[9px] text-slate-400 leading-none">{kpi.subLabel}</div>
+                  <div className="text-[11px] font-bold text-slate-800">{c.subVal}</div>
+                  <div className="text-[9px] text-slate-400 leading-none mt-0.5">
+                    {c.subLabel}
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Period Comparison Footer */}
-            <div className="flex flex-wrap items-center gap-x-1 text-[10px] leading-tight">
-              <span
-                className={`inline-flex items-center font-bold shrink-0 ${
-                  isPos ? 'text-emerald-600' : 'text-rose-600'
-                }`}
-              >
-                {isPos ? (
-                  <ArrowUpRight className="w-2.5 h-2.5" />
-                ) : (
-                  <ArrowDownRight className="w-2.5 h-2.5" />
-                )}
-                {Math.abs(kpi.delta)}%
+            {/* Bottom Delta Pill (Exact match to screenshot) */}
+            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-200/90 bg-slate-50/50 text-[9.5px] w-fit max-w-full">
+              <span className="text-emerald-600 font-bold shrink-0">
+                ↗ {c.delta}%
               </span>
-              <span className="text-slate-400">vs. previous {diffDays} days</span>
+              <span className="text-slate-400 truncate">
+                vs. previous {diffDays} days
+              </span>
             </div>
           </div>
         );

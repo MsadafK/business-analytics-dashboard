@@ -1,7 +1,7 @@
 import React from 'react';
-import { Calendar, Download, Layers } from 'lucide-react';
-import type { DatePreset, DateWindows } from '../types/analytics';
-import { SALES_REPS, OPS_REPS } from '../data/mockData';
+import { Calendar, Download, ChevronDown } from 'lucide-react';
+import type { DatePreset } from '../types/analytics';
+import { ALL_USERS, ALL_DEPARTMENTS } from '../data/mockData';
 
 interface HeaderFiltersProps {
   datePreset: DatePreset;
@@ -14,10 +14,6 @@ interface HeaderFiltersProps {
   setSelectedUser: (val: string) => void;
   selectedDept: string;
   setSelectedDept: (val: string) => void;
-  activeTab: 'overview' | 'relational';
-  setActiveTab: (tab: 'overview' | 'relational') => void;
-  totalLeadsCount: number;
-  dateWindows: DateWindows;
   onExport: () => void;
 }
 
@@ -32,158 +28,101 @@ export const HeaderFilters: React.FC<HeaderFiltersProps> = ({
   setSelectedUser,
   selectedDept,
   setSelectedDept,
-  activeTab,
-  setActiveTab,
-  totalLeadsCount,
-  dateWindows,
   onExport,
 }) => {
-  const presets: { id: DatePreset; label: string }[] = [
-    { id: 'today', label: 'Today' },
-    { id: '7d', label: 'Last 7 Days' },
-    { id: '30d', label: 'Last 30 Days' },
-    { id: 'oct', label: 'Oct 1 - Oct 31, 2026' },
-    { id: 'custom', label: 'Custom Range' },
-  ];
-
   return (
-    <header className="bg-white border-b border-slate-200 lg:sticky lg:top-0 z-30 shadow-xs">
-      <div className="max-w-[1600px] mx-auto px-3 sm:px-6 py-3 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-2.5">
-        {/* Title & Subtitle */}
-        <div className="min-w-0 shrink-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-base sm:text-xl 2xl:text-2xl font-bold text-slate-900 tracking-tight leading-snug">
-              Business Performance & Revenue Analytics
-            </h1>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
-              Live Interactive
-            </span>
-          </div>
-          <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
+    <header className="max-w-[1600px] mx-auto px-3 sm:px-6 pt-4 pb-2">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        {/* Left Title & Subtitle */}
+        <div>
+          <h1 className="text-lg sm:text-[22px] font-extrabold text-[#0f172a] tracking-tight">
+            Business Performance & Revenue Analytics
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
             Track your leads, conversions, quotations, deals, revenue and operations in real time.
           </p>
         </div>
 
-        {/* Filter Controls - Single Row on XL (1440px), Wrapped cleanly on Mobile (320px) */}
-        <div className="flex flex-col sm:flex-row sm:flex-wrap xl:flex-nowrap items-stretch sm:items-center gap-2">
-          {/* Date Presets: Wrap on <640px so nothing clips at 320px */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center bg-slate-100 p-1 rounded-lg border border-slate-200 text-[11px] font-medium gap-0.5">
-            {presets.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setDatePreset(p.id)}
-                className={`px-2 py-1 rounded-md transition whitespace-nowrap cursor-pointer \${
-                  datePreset === p.id
-                    ? 'bg-white text-blue-600 shadow-xs font-semibold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
+        {/* Right Controls (Exact Match to Screenshot) */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Date Dropdown with Calendar Icon */}
+          <div className="relative inline-flex items-center bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-2xs">
+            <Calendar className="w-3.5 h-3.5 text-slate-500 mr-2 shrink-0" />
+            <select
+              value={datePreset}
+              onChange={(e) => setDatePreset(e.target.value as DatePreset)}
+              className="appearance-none bg-transparent pr-5 text-xs font-medium text-slate-700 outline-none cursor-pointer"
+            >
+              <option value="oct">Oct 1 - Oct 31, 2026</option>
+              <option value="today">Today</option>
+              <option value="7d">Last 7 Days</option>
+              <option value="30d">Last 30 Days</option>
+              <option value="custom">Custom Date Range</option>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 pointer-events-none" />
           </div>
 
-          {/* Custom Date Range Picker */}
+          {/* Custom Date Inputs if Custom Range is selected */}
           {datePreset === 'custom' && (
-            <div className="flex items-center justify-between sm:justify-start gap-1 bg-white border border-slate-300 rounded-lg px-2 py-1 text-[11px]">
-              <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs shadow-2xs">
               <input
                 type="date"
                 value={customStart}
-                min="2026-08-15"
-                max="2026-10-31"
                 onChange={(e) => setCustomStart(e.target.value)}
-                className="outline-none text-slate-700 w-full sm:w-auto"
+                className="outline-none text-slate-700"
               />
               <span className="text-slate-400">to</span>
               <input
                 type="date"
                 value={customEnd}
-                min="2026-08-15"
-                max="2026-10-31"
                 onChange={(e) => setCustomEnd(e.target.value)}
-                className="outline-none text-slate-700 w-full sm:w-auto"
+                className="outline-none text-slate-700"
               />
             </div>
           )}
 
-          {/* User, Dept & Export Row */}
-          <div className="grid grid-cols-2 sm:flex items-center gap-1.5 shrink-0">
+          {/* All Users Dropdown */}
+          <div className="relative inline-flex items-center bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-2xs min-w-[130px]">
             <select
               value={selectedUser}
               onChange={(e) => setSelectedUser(e.target.value)}
-              className="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-slate-700 outline-none hover:border-slate-300 cursor-pointer w-full sm:w-auto"
+              className="appearance-none bg-transparent w-full pr-5 text-xs font-medium text-slate-700 outline-none cursor-pointer"
             >
               <option value="All Users">All Users</option>
-              <optgroup label="Sales Team">
-                {SALES_REPS.map((u) => (
-                  <option key={u} value={u}>
-                    {u}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Operations Team">
-                {OPS_REPS.map((u) => (
-                  <option key={u} value={u}>
-                    {u}
-                  </option>
-                ))}
-              </optgroup>
+              {ALL_USERS.map((u) => (
+                <option key={u} value={u}>
+                  {u}
+                </option>
+              ))}
             </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 pointer-events-none" />
+          </div>
 
+          {/* All Departments Dropdown */}
+          <div className="relative inline-flex items-center bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-2xs min-w-[145px]">
             <select
               value={selectedDept}
               onChange={(e) => setSelectedDept(e.target.value)}
-              className="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-slate-700 outline-none hover:border-slate-300 cursor-pointer w-full sm:w-auto"
+              className="appearance-none bg-transparent w-full pr-5 text-xs font-medium text-slate-700 outline-none cursor-pointer"
             >
               <option value="All Departments">All Departments</option>
-              <option value="Sales">Sales</option>
-              <option value="Operations">Operations</option>
-              <option value="Enterprise">Enterprise</option>
+              {ALL_DEPARTMENTS.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
             </select>
-
-            <button
-              onClick={onExport}
-              className="col-span-2 sm:col-span-1 inline-flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded-lg shadow-xs transition cursor-pointer shrink-0"
-            >
-              <Download className="w-3.5 h-3.5" />
-              Export
-            </button>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 pointer-events-none" />
           </div>
-        </div>
-      </div>
 
-      {/* Sub-navigation & Comparison Period Info */}
-      <div className="max-w-[1600px] mx-auto px-3 sm:px-6 py-2 bg-slate-50/90 border-t border-slate-200/80 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-1.5 text-xs">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          {/* Export Button */}
           <button
-            onClick={() => setActiveTab('overview')}
-            className={`font-semibold pb-1 border-b-2 transition text-[11px] sm:text-xs cursor-pointer \${
-              activeTab === 'overview'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
+            onClick={onExport}
+            className="inline-flex items-center gap-1.5 bg-[#2563eb] hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-lg shadow-2xs transition cursor-pointer"
           >
-            Executive Dashboard View
+            <Download className="w-3.5 h-3.5" />
+            Export
           </button>
-          <button
-            onClick={() => setActiveTab('relational')}
-            className={`font-semibold pb-1 border-b-2 flex items-center gap-1 transition text-[11px] sm:text-xs cursor-pointer \${
-              activeTab === 'relational'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5 shrink-0" />
-            <span>Lead-Wise Relational History ({totalLeadsCount} Leads)</span>
-          </button>
-        </div>
-
-        <div className="text-[10px] sm:text-[11px] text-slate-500 leading-relaxed">
-          Showing <span className="font-semibold text-slate-700">{dateWindows.startStr}</span> to{' '}
-          <span className="font-semibold text-slate-700">{dateWindows.endStr}</span> • vs. previous{' '}
-          <span className="font-semibold text-slate-700">{dateWindows.diffDays} days</span> (
-          {dateWindows.prevStartStr} to {dateWindows.prevEndStr})
         </div>
       </div>
     </header>

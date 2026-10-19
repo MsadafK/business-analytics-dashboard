@@ -1,268 +1,396 @@
 import type {
-  Lead,
-  CRMActivity,
-  ServiceCategory,
-  LeadSource,
-  LeadStatus,
-  Quotation,
-  Deal,
-  QuoteStatus,
-  Priority,
-  Order,
-  Payment,
-  OrderStage,
-  PaymentMode,
+  DailyLeadPoint,
+  LeadSourceItem,
+  QuoteCategoryBar,
+  QuoteValueFunnelItem,
+  ServiceQuoteDetailRow,
+  DealServiceBar,
+  RevenueCategoryRow,
+  PriorityRow,
+  DailyRevenueBar,
+  SalesTeamRow,
+  OpsTeamRow,
+  OrderStageRow,
+  CrmActivityRow,
+  RelationalLeadRecord,
 } from '../types/analytics';
 
-export const SALES_REPS = ['Nancy Singh', 'Sneha Choudhary', 'Tannu Kumari', 'Rohit Verma'];
-export const OPS_REPS = ['Gaurav Pant', 'Srishti Upadhyay', 'Azam Afaroz', 'Vikram Patel'];
-
-export const SERVICES: ServiceCategory[] = [
-  'Private Limited Company',
-  'LLP Registration',
-  'Trademark',
-  'Startup India Registration',
-  'ISO Certification',
-  'GST & Annual Compliance',
-  'FSSAI License',
+export const ALL_USERS = [
+  'Nancy Singh',
+  'Sneha Choudhary',
+  'Tannu Kumari',
+  'Gaurav Pant',
+  'Srishti Upadhyay',
+  'Azam Afaroz',
 ];
 
-export const SOURCES: LeadSource[] = ['Google Ads', 'Website', 'Just Dial', 'Other'];
-export const MONTHLY_TARGET = 8500000;
-export const TODAY_STR = '2026-10-18';
+export const ALL_DEPARTMENTS = ['Sales', 'Operations', 'Enterprise'];
 
-const BASE_PRICES: Record<ServiceCategory, number> = {
-  'Private Limited Company': 18500,
-  'LLP Registration': 12500,
-  'Trademark': 6500,
-  'Startup India Registration': 9500,
-  'ISO Certification': 11000,
-  'GST & Annual Compliance': 8000,
-  'FSSAI License': 7500,
-};
+export const BASE_DAILY_LEAD_TREND: DailyLeadPoint[] = [
+  { label: '1 Oct', newLeads: 15, qualified: 4, converted: 1 },
+  { label: '4 Oct', newLeads: 29, qualified: 14, converted: 6 },
+  { label: '7 Oct', newLeads: 31, qualified: 15, converted: 7 },
+  { label: '10 Oct', newLeads: 7, qualified: 4, converted: 2 },
+  { label: '13 Oct', newLeads: 5, qualified: 3, converted: 0 },
+  { label: '16 Oct', newLeads: 2, qualified: 1, converted: 0 },
+  { label: '19 Oct', newLeads: 1, qualified: 1, converted: 0 },
+  { label: '22 Oct', newLeads: 1, qualified: 0, converted: 0 },
+  { label: '25 Oct', newLeads: 0, qualified: 0, converted: 0 },
+  { label: '28 Oct', newLeads: 0, qualified: 0, converted: 0 },
+  { label: '31 Oct', newLeads: 0, qualified: 0, converted: 0 },
+];
 
-function generateRelationalData(): { leads: Lead[]; activities: CRMActivity[] } {
-  const leads: Lead[] = [];
-  const activities: CRMActivity[] = [];
+export const BASE_LEAD_SOURCES: LeadSourceItem[] = [
+  { source: 'Google Ads', count: 70, pct: 76.9, badgePct: '77%', color: '#2563eb' },
+  { source: 'Website', count: 21, pct: 23.1, badgePct: '23%', color: '#10b981' },
+  { source: 'Other', count: 0, pct: 0, badgePct: '0%', color: '#f59e0b' },
+  { source: 'Just Dial', count: 0, pct: 0, badgePct: '0%', color: '#8b5cf6' },
+];
 
-  const startDate = new Date('2026-08-15T00:00:00');
-  let quoteCounter = 10350;
-  let dealCounter = 750;
-  let orderCounter = 2050;
-  let paymentCounter = 980;
+export const BASE_QUOTE_CATEGORIES: QuoteCategoryBar[] = [
+  { service: 'Private Limited Company', shortLabel: 'Private Li...', count: 56 },
+  { service: 'LLP Registration', shortLabel: 'LLP Regist...', count: 16 },
+  { service: 'Trademark', shortLabel: 'Trademark', count: 8 },
+  { service: 'Startup India Registration', shortLabel: 'Startup In...', count: 5 },
+  { service: 'ISO Certification', shortLabel: 'ISO Certif...', count: 5 },
+  { service: 'Penalty', shortLabel: 'Penalty', count: 2 },
+];
 
-  for (let i = 1; i <= 175; i++) {
-    const dayOffset =
-      i <= 75 ? Math.floor((i / 75) * 46) : 47 + Math.floor(((i - 75) / 100) * 18);
-    const createdDate = new Date(startDate);
-    createdDate.setDate(startDate.getDate() + dayOffset);
-    const dateStr = createdDate.toISOString().split('T')[0];
+export const BASE_QUOTE_FUNNEL: QuoteValueFunnelItem[] = [
+  { service: 'Private Limited', value: 1250000, pct: 32, color: '#2563eb' },
+  { service: 'LLP', value: 875000, pct: 22, color: '#06b6d4' },
+  { service: 'GST', value: 640000, pct: 16, color: '#10b981' },
+  { service: 'Trademark', value: 420000, pct: 11, color: '#facc15' },
+  { service: 'FSSAI', value: 310000, pct: 8, color: '#f97316' },
+  { service: 'Annual Compliance', value: 275000, pct: 7, color: '#6366f1' },
+];
 
-    const salesRep = SALES_REPS[i % SALES_REPS.length];
-    const department = i % 5 === 0 ? 'Enterprise' : 'Sales';
-    const source: LeadSource =
-      i % 10 < 7 ? 'Google Ads' : i % 10 < 9 ? 'Website' : i % 2 === 0 ? 'Just Dial' : 'Other';
+export const BASE_SERVICE_QUOTE_DETAILS: ServiceQuoteDetailRow[] = [
+  {
+    service: 'Private Limited Company',
+    quotations: 56,
+    quotedAmount: 654326,
+    accepted: 0,
+    pending: 56,
+    rejected: 0,
+    convRate: 0,
+  },
+  {
+    service: 'LLP Registration',
+    quotations: 16,
+    quotedAmount: 135272,
+    accepted: 0,
+    pending: 16,
+    rejected: 0,
+    convRate: 0,
+  },
+  {
+    service: 'Trademark',
+    quotations: 8,
+    quotedAmount: 22496,
+    accepted: 0,
+    pending: 8,
+    rejected: 0,
+    convRate: 0,
+  },
+  {
+    service: 'Startup India Registration',
+    quotations: 5,
+    quotedAmount: 22399,
+    accepted: 0,
+    pending: 5,
+    rejected: 0,
+    convRate: 0,
+  },
+  {
+    service: 'ISO Certification',
+    quotations: 5,
+    quotedAmount: 37117,
+    accepted: 0,
+    pending: 5,
+    rejected: 0,
+    convRate: 0,
+  },
+];
 
-    let status: LeadStatus = 'Unqualified';
-    if (i % 10 === 0 || i % 10 === 4) status = 'Converted';
-    else if (i % 10 === 1 || i % 10 === 2 || i % 10 === 5) status = 'Qualified';
-    else if (i % 10 === 3) status = 'New';
+export const BASE_DEAL_SERVICE_BARS: DealServiceBar[] = [
+  { service: 'Private Limited', shortLabel: 'Private Li...', deals: 3, revenue: 26800, revenueLabel: '₹26.8K' },
+  { service: 'General Filing', shortLabel: 'General F...', deals: 2, revenue: 29700, revenueLabel: '₹29.7K' },
+  { service: 'Annual Compliance', shortLabel: 'Annual C...', deals: 2, revenue: 7900, revenueLabel: '₹7.9K' },
+  { service: 'Name Approval', shortLabel: 'Name Ap...', deals: 2, revenue: 2100, revenueLabel: '₹2.1K' },
+  { service: 'Company Registration', shortLabel: 'Company...', deals: 2, revenue: 5000, revenueLabel: '₹5.0K' },
+  { service: 'One Person Company', shortLabel: 'One Pers...', deals: 1, revenue: 2000, revenueLabel: '₹2.0K' },
+];
 
-    const leadId = `#L-${208900 + i}`;
-    const quotations: Quotation[] = [];
-    const deals: Deal[] = [];
+export const BASE_REVENUE_CATEGORIES: RevenueCategoryRow[] = [
+  { category: 'General Filing', shortLabel: 'General Filing', revenue: 29700, revenueLabel: '₹29.7K', pct: 28.9 },
+  { category: 'Private Limited Company', shortLabel: 'Private Limited...', revenue: 26800, revenueLabel: '₹26.8K', pct: 26.0 },
+  { category: 'FSSAI License', shortLabel: 'FSSAI License', revenue: 15000, revenueLabel: '₹15.0K', pct: 14.6 },
+  { category: 'Annual Compliance', shortLabel: 'Annual Compli...', revenue: 7900, revenueLabel: '₹7.9K', pct: 7.7 },
+  { category: 'Website development', shortLabel: 'Website develo...', revenue: 6000, revenueLabel: '₹6.0K', pct: 5.8 },
+  { category: 'Other', shortLabel: 'Other', revenue: 6000, revenueLabel: '₹6.0K', pct: 5.8 },
+];
 
-    // 1 Lead -> Multiple Quotations
-    const numQuotes =
-      status === 'Converted'
-        ? (i % 2) + 2
-        : status === 'Qualified'
-        ? (i % 2) + 1
-        : i % 4 === 0
-        ? 1
-        : 0;
+export const BASE_PRIORITY_ROWS: PriorityRow[] = [
+  { priority: 'High', deals: 14, revenue: 65428, pct: 60.9, color: '#ef4444' },
+  { priority: 'Medium', deals: 9, revenue: 37500, pct: 39.1, color: '#f59e0b' },
+  { priority: 'Low', deals: 0, revenue: 0, pct: 0, color: '#10b981' },
+];
 
-    for (let q = 0; q < numQuotes; q++) {
-      quoteCounter++;
-      const service = SERVICES[(i + q) % SERVICES.length];
-      const amount = BASE_PRICES[service] + ((i * 350 + q * 1200) % 6000);
-      const isAccepted = status === 'Converted' && q === 0;
-      const qStatus: QuoteStatus = isAccepted
-        ? 'Accepted'
-        : q === 1 && i % 3 === 0
-        ? 'Rejected'
-        : 'Pending';
+export const BASE_DAILY_REVENUE_BARS: DailyRevenueBar[] = [
+  { label: '1 Oct', revenue: 95, collected: 95 },
+  { label: '4 Oct', revenue: 95, collected: 95 },
+  { label: '7 Oct', revenue: 95, collected: 95 },
+  { label: '10 Oct', revenue: 95, collected: 95 },
+  { label: '13 Oct', revenue: 95, collected: 95 },
+  { label: '16 Oct', revenue: 95, collected: 95 },
+];
 
-      const quoteId = `#Q-${quoteCounter}`;
-      quotations.push({
-        id: quoteId,
-        leadId,
-        service,
-        amount,
-        status: qStatus,
-        salesRep,
-        createdAt: dateStr,
-      });
+export const BASE_SALES_TEAM: SalesTeamRow[] = [
+  {
+    initial: 'N',
+    name: 'Nancy Singh',
+    department: 'Sales',
+    leadsHandled: 65,
+    qualified: 32,
+    converted: 12,
+    conversionPct: 18.5,
+    quotations: 54,
+    deals: 13,
+    dealValue: 99217,
+    revenue: 52498,
+  },
+  {
+    initial: 'S',
+    name: 'Sneha Choudhary',
+    department: 'Sales',
+    leadsHandled: 4,
+    qualified: 3,
+    converted: 2,
+    conversionPct: 50,
+    quotations: 13,
+    deals: 5,
+    dealValue: 70980,
+    revenue: 40000,
+  },
+  {
+    initial: 'T',
+    name: 'Tannu Kumari',
+    department: 'Enterprise',
+    leadsHandled: 8,
+    qualified: 3,
+    converted: 2,
+    conversionPct: 25,
+    quotations: 28,
+    deals: 3,
+    dealValue: 9430,
+    revenue: 7430,
+  },
+];
 
-      activities.push({
-        id: `ACT-Q-${quoteCounter}`,
-        timestamp: `${dateStr}T11:${(10 + ((q * 13) % 45)).toString().padStart(2, '0')}:22`,
-        date: dateStr,
-        employee: salesRep,
-        department,
-        action: 'Quotation created',
-        recordId: quoteId,
-        leadId,
-      });
+export const BASE_OPS_TEAM: OpsTeamRow[] = [
+  {
+    initial: 'G',
+    name: 'Gaurav Pant',
+    color: '#0284c7',
+    department: 'Operations',
+    ordersUpdated: 4,
+    stagesCompleted: 17,
+    pendingStages: 13,
+    overdueOrders: 0,
+  },
+  {
+    initial: 'S',
+    name: 'Srishti Upadhyay',
+    color: '#0284c7',
+    department: 'Operations',
+    ordersUpdated: 1,
+    stagesCompleted: 0,
+    pendingStages: 5,
+    overdueOrders: 0,
+  },
+  {
+    initial: 'A',
+    name: 'Azam Afaroz',
+    color: '#0284c7',
+    department: 'Operations',
+    ordersUpdated: 0,
+    stagesCompleted: 0,
+    pendingStages: 0,
+    overdueOrders: 0,
+  },
+];
 
-      // 1 Lead -> Multiple Deals
-      if (isAccepted || (status === 'Converted' && q === 1 && i % 4 === 0)) {
-        dealCounter++;
-        const dealId = `#D-${dealCounter}`;
-        const priority: Priority = i % 3 === 0 ? 'High' : i % 3 === 1 ? 'Medium' : 'Low';
-        const dealOrders: Order[] = [];
-        const dealPayments: Payment[] = [];
+export const BASE_ORDER_STAGES: OrderStageRow[] = [
+  { service: 'Private Limited Company', shortLabel: 'Private Limited...', pending: 8, inProgress: 0, completed: 1, onHold: 0, total: 9 },
+  { service: 'ISO Certification', shortLabel: 'ISO Certification', pending: 3, inProgress: 0, completed: 0, onHold: 0, total: 3 },
+  { service: 'DSC & DIN Services', shortLabel: 'DSC & DIN Serv...', pending: 2, inProgress: 0, completed: 1, onHold: 0, total: 3 },
+  { service: 'Penalty', shortLabel: 'Penalty', pending: 2, inProgress: 0, completed: 0, onHold: 0, total: 2 },
+  { service: 'LLP Registration', shortLabel: 'LLP Registration', pending: 2, inProgress: 0, completed: 0, onHold: 0, total: 2 },
+];
 
-        // 1 Deal -> Multiple Orders
-        const numOrders = i % 3 === 0 ? 2 : 1;
-        for (let o = 0; o < numOrders; o++) {
-          orderCounter++;
-          const orderId = `#O-${orderCounter}`;
-          const orderService = o === 0 ? service : SERVICES[(i + o + 2) % SERVICES.length];
-          const opsRep = OPS_REPS[(i + o) % OPS_REPS.length];
-          const stage: OrderStage =
-            i % 4 === 0
-              ? 'Completed'
-              : i % 4 === 1
-              ? 'In Progress'
-              : i % 7 === 0
-              ? 'On Hold'
-              : 'Pending';
-          const totalStages = 5;
-          const completedStages =
-            stage === 'Completed' ? 5 : stage === 'In Progress' ? 3 : stage === 'On Hold' ? 2 : 1;
+export const BASE_CRM_ACTIVITIES: CrmActivityRow[] = [
+  {
+    id: 'act-1',
+    time: '2026-10-16T12:14:10.847Z',
+    initial: 'N',
+    employee: 'Nancy Singh',
+    action: 'Lead updated',
+    record: '#L-209010',
+    leadId: '#L-209010',
+  },
+  {
+    id: 'act-2',
+    time: '2026-10-16T12:14:10.838Z',
+    initial: 'N',
+    employee: 'Nancy Singh',
+    action: 'Lead updated',
+    record: '#L-209010',
+    leadId: '#L-209010',
+  },
+  {
+    id: 'act-3',
+    time: '2026-10-16T11:53:02.446Z',
+    initial: 'S',
+    employee: 'Sneha Choudhary',
+    action: 'Payment recorded',
+    record: '#P-1081',
+    leadId: '#L-209011',
+  },
+  {
+    id: 'act-4',
+    time: '2026-10-16T11:53:02.436Z',
+    initial: 'S',
+    employee: 'Sneha Choudhary',
+    action: 'Order created',
+    record: '#O-2168',
+    leadId: '#L-209011',
+  },
+  {
+    id: 'act-5',
+    time: '2026-10-16T11:53:02.431Z',
+    initial: 'S',
+    employee: 'Sneha Choudhary',
+    action: 'Deal created',
+    record: '#D-822',
+    leadId: '#L-209011',
+  },
+  {
+    id: 'act-6',
+    time: '2026-10-16T11:48:28.572Z',
+    initial: 'S',
+    employee: 'Sneha Choudhary',
+    action: 'Quotation created',
+    record: '#Q-10467',
+    leadId: '#L-209011',
+  },
+  {
+    id: 'act-7',
+    time: '2026-10-16T11:44:50.538Z',
+    initial: 'T',
+    employee: 'Tannu Kumari',
+    action: 'Quotation created',
+    record: '#Q-10466',
+    leadId: '#L-209012',
+  },
+];
 
-          dealOrders.push({
-            id: orderId,
-            dealId,
-            leadId,
-            service: orderService,
-            stage,
-            totalStages,
-            completedStages,
-            isOverdue: stage !== 'Completed' && i % 6 === 0,
-            assignedOps: opsRep,
-            createdAt: dateStr,
-            updatedAt: dateStr,
-          });
-
-          activities.push({
-            id: `ACT-O-${orderCounter}`,
-            timestamp: `${dateStr}T14:${(15 + ((o * 19) % 40)).toString().padStart(2, '0')}:09`,
-            date: dateStr,
-            employee: opsRep,
-            department: 'Operations',
-            action: 'Order created',
-            recordId: orderId,
-            leadId,
-          });
-        }
-
-        // 1 Deal -> Multiple Payments
-        const numPayments = i % 2 === 0 ? 2 : 1;
-        let totalCollected = 0;
-        for (let p = 0; p < numPayments; p++) {
-          paymentCounter++;
-          const paymentId = `#P-${paymentCounter}`;
-          const payAmt =
-            numPayments === 2
-              ? Math.round(amount * (p === 0 ? 0.5 : 0.35))
-              : Math.round(amount * 0.7);
-          totalCollected += payAmt;
-          const modes: PaymentMode[] = ['UPI', 'NEFT/RTGS', 'Credit Card', 'Razorpay'];
-
-          dealPayments.push({
-            id: paymentId,
-            dealId,
-            orderId: dealOrders[0].id,
-            amount: payAmt,
-            date: dateStr,
-            mode: modes[(i + p) % modes.length],
-            status: 'Success',
-            recordedBy: salesRep,
-          });
-
-          activities.push({
-            id: `ACT-P-${paymentCounter}`,
-            timestamp: `${dateStr}T16:${(20 + ((p * 11) % 35)).toString().padStart(2, '0')}:44`,
-            date: dateStr,
-            employee: salesRep,
-            department,
-            action: 'Payment recorded',
-            recordId: paymentId,
-            leadId,
-          });
-        }
-
-        const progress = Math.min(100, Math.round((totalCollected / amount) * 100));
-
-        deals.push({
-          id: dealId,
-          leadId,
-          quotationId: quoteId,
-          service,
-          priority,
-          dealValue: amount,
-          collectedAmount: totalCollected,
-          progress,
-          salesRep,
-          createdAt: dateStr,
-          orders: dealOrders,
-          payments: dealPayments,
-        });
-
-        activities.push({
-          id: `ACT-D-${dealCounter}`,
-          timestamp: `${dateStr}T13:05:51`,
-          date: dateStr,
-          employee: salesRep,
-          department,
-          action: 'Deal created',
-          recordId: dealId,
-          leadId,
-        });
-      }
-    }
-
-    leads.push({
-      id: leadId,
-      name: `Client ${i} (${['Sharma', 'Patel', 'Gupta', 'Khan', 'Reddy', 'Nair', 'Joshi'][i % 7]})`,
-      company: `${['Apex', 'Nova', 'Zenith', 'Vertex', 'Orchid', 'Pulse', 'Quantum'][i % 7]} Ventures Pvt Ltd`,
-      email: `contact.client${i}@enterprise.in`,
-      phone: `+91 98${(10000000 + i * 54321).toString().slice(0, 8)}`,
-      status,
-      source,
-      salesRep,
-      department,
-      createdAt: dateStr,
-      quotations,
-      deals,
-    });
-
-    activities.push({
-      id: `ACT-L-${i}`,
-      timestamp: `${dateStr}T09:${(10 + (i % 48)).toString().padStart(2, '0')}:10`,
-      date: dateStr,
-      employee: salesRep,
-      department,
-      action: 'Lead updated',
-      recordId: leadId,
-      leadId,
-    });
-  }
-
-  activities.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
-  return { leads, activities };
-}
-
-export const DATASET = generateRelationalData();
+export const RELATIONAL_LEADS: RelationalLeadRecord[] = [
+  {
+    leadId: '#L-209010',
+    clientName: 'Arjun Mehta',
+    company: 'Apex Tech Solutions Pvt Ltd',
+    source: 'Google Ads',
+    status: 'Converted',
+    salesRep: 'Nancy Singh',
+    department: 'Sales',
+    createdAt: '2026-10-16',
+    quotations: [
+      { id: '#Q-10461', service: 'Private Limited Company', amount: 32500, status: 'Accepted', date: '2026-10-14' },
+      { id: '#Q-10464', service: 'GST & Annual Compliance', amount: 14800, status: 'Accepted', date: '2026-10-15' },
+      { id: '#Q-10465', service: 'Trademark', amount: 6500, status: 'Pending', date: '2026-10-16' },
+    ],
+    deals: [
+      {
+        id: '#D-820',
+        quoteId: '#Q-10461',
+        service: 'Private Limited Company',
+        priority: 'High',
+        dealValue: 32500,
+        collected: 25000,
+        progress: 77,
+        orders: [
+          { id: '#O-2164', service: 'Private Limited Company', opsRep: 'Gaurav Pant', stage: 'Completed', completedStages: 5, totalStages: 5 },
+          { id: '#O-2165', service: 'DSC & DIN Services', opsRep: 'Gaurav Pant', stage: 'Pending', completedStages: 2, totalStages: 5 },
+        ],
+        payments: [
+          { id: '#P-1078', orderId: '#O-2164', amount: 15000, mode: 'UPI', date: '2026-10-14' },
+          { id: '#P-1079', orderId: '#O-2164', amount: 10000, mode: 'NEFT/RTGS', date: '2026-10-16' },
+        ],
+      },
+      {
+        id: '#D-821',
+        quoteId: '#Q-10464',
+        service: 'GST & Annual Compliance',
+        priority: 'Medium',
+        dealValue: 14800,
+        collected: 14800,
+        progress: 100,
+        orders: [
+          { id: '#O-2166', service: 'General Filing', opsRep: 'Srishti Upadhyay', stage: 'Pending', completedStages: 1, totalStages: 5 },
+        ],
+        payments: [
+          { id: '#P-1080', orderId: '#O-2166', amount: 14800, mode: 'Razorpay', date: '2026-10-15' },
+        ],
+      },
+    ],
+  },
+  {
+    leadId: '#L-209011',
+    clientName: 'Priya Nair',
+    company: 'Nova Retail LLP',
+    source: 'Website',
+    status: 'Converted',
+    salesRep: 'Sneha Choudhary',
+    department: 'Sales',
+    createdAt: '2026-10-16',
+    quotations: [
+      { id: '#Q-10467', service: 'Private Limited Company', amount: 42000, status: 'Accepted', date: '2026-10-16' },
+      { id: '#Q-10468', service: 'FSSAI License', amount: 15000, status: 'Pending', date: '2026-10-16' },
+    ],
+    deals: [
+      {
+        id: '#D-822',
+        quoteId: '#Q-10467',
+        service: 'Private Limited Company',
+        priority: 'High',
+        dealValue: 42000,
+        collected: 28000,
+        progress: 67,
+        orders: [
+          { id: '#O-2168', service: 'Private Limited Company', opsRep: 'Gaurav Pant', stage: 'Pending', completedStages: 3, totalStages: 5 },
+          { id: '#O-2169', service: 'ISO Certification', opsRep: 'Srishti Upadhyay', stage: 'Pending', completedStages: 1, totalStages: 5 },
+        ],
+        payments: [
+          { id: '#P-1081', orderId: '#O-2168', amount: 18000, mode: 'Credit Card', date: '2026-10-16' },
+          { id: '#P-1082', orderId: '#O-2168', amount: 10000, mode: 'UPI', date: '2026-10-16' },
+        ],
+      },
+    ],
+  },
+  {
+    leadId: '#L-209012',
+    clientName: 'Vikramaditya Rao',
+    company: 'Zenith Foods & Beverages',
+    source: 'Google Ads',
+    status: 'Qualified',
+    salesRep: 'Tannu Kumari',
+    department: 'Enterprise',
+    createdAt: '2026-10-16',
+    quotations: [
+      { id: '#Q-10466', service: 'LLP Registration', amount: 18500, status: 'Pending', date: '2026-10-16' },
+      { id: '#Q-10469', service: 'Startup India Registration', amount: 11200, status: 'Pending', date: '2026-10-16' },
+    ],
+    deals: [],
+  },
+];

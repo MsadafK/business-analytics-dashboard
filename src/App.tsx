@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import type { DatePreset, Lead } from './types/analytics';
-import { DATASET } from './data/mockData';
-import { exportLeadsToCSV } from './utils/formatters';
+import type { DatePreset, RelationalLeadRecord } from './types/analytics';
+import { exportDashboardCSV } from './utils/formatters';
 import { useAnalyticsData } from './hooks/useAnalyticsData';
 import { HeaderFilters } from './components/HeaderFilters';
 import { KpiCardsGrid } from './components/KpiCardsGrid';
@@ -9,36 +8,42 @@ import { LeadAnalyticsSection } from './components/LeadAnalyticsSection';
 import { QuotationAnalyticsSection } from './components/QuotationAnalyticsSection';
 import { DealsRevenueSection } from './components/DealsRevenueSection';
 import { OperationsPaymentsSection } from './components/OperationsPaymentsSection';
-import { RelationalExplorerTab } from './components/RelationalExplorerTab';
 import { DrillDownModal } from './components/DrillDownModal';
 
 export default function App() {
   const [datePreset, setDatePreset] = useState<DatePreset>('oct');
   const [customStart, setCustomStart] = useState('2026-10-01');
-  const [customEnd, setCustomEnd] = useState('2026-10-18');
+  const [customEnd, setCustomEnd] = useState('2026-10-31');
   const [selectedUser, setSelectedUser] = useState<string>('All Users');
   const [selectedDept, setSelectedDept] = useState<string>('All Departments');
-  const [activeTab, setActiveTab] = useState<'overview' | 'relational'>('overview');
-  const [drillDownLead, setDrillDownLead] = useState<Lead | null>(null);
+  const [drillDownLead, setDrillDownLead] = useState<RelationalLeadRecord | null>(null);
 
   const {
     dateWindows,
-    currentLeads,
-    curr,
-    prev,
-    dailyTrends,
-    serviceAnalytics,
-    sourceBreakdown,
-    filteredActivities,
+    kpis,
+    dailyLeadTrend,
+    leadSources,
+    quoteCategories,
+    quoteFunnel,
+    serviceQuoteDetails,
+    dealServiceBars,
+    revenueCategories,
+    priorityRows,
+    dailyRevenueBars,
+    salesTeam,
+    opsTeam,
+    orderStages,
+    crmActivities,
+    relationalLeads,
   } = useAnalyticsData(datePreset, customStart, customEnd, selectedUser, selectedDept);
 
   const openRecordDrillDown = (leadId: string) => {
-    const found = DATASET.leads.find((l) => l.id === leadId);
-    if (found) setDrillDownLead(found);
+    const found = relationalLeads.find((l) => l.leadId === leadId) || relationalLeads[0];
+    setDrillDownLead(found);
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f7fb] text-slate-800 font-sans pb-14">
+    <div className="min-h-screen bg-[#f3f6fb] text-slate-800 font-sans pb-10">
       <HeaderFilters
         datePreset={datePreset}
         setDatePreset={setDatePreset}
@@ -50,61 +55,54 @@ export default function App() {
         setSelectedUser={setSelectedUser}
         selectedDept={selectedDept}
         setSelectedDept={setSelectedDept}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        totalLeadsCount={curr.totalLeads}
-        dateWindows={dateWindows}
-        onExport={() =>
-          exportLeadsToCSV(currentLeads, dateWindows.startStr, dateWindows.endStr)
-        }
+        onExport={() => exportDashboardCSV(serviceQuoteDetails, dateWindows.label)}
       />
 
-      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 pt-5 space-y-6">
-        {activeTab === 'relational' ? (
-          <RelationalExplorerTab
-            leads={currentLeads}
-            onSelectLead={(lead) => setDrillDownLead(lead)}
-          />
-        ) : (
-          <>
-            <KpiCardsGrid
-              curr={curr}
-              prev={prev}
-              diffDays={dateWindows.diffDays}
-              onCardClick={() => setActiveTab('relational')}
-            />
+      <main className="max-w-[1600px] mx-auto px-3 sm:px-6 pt-2 space-y-4">
+        <KpiCardsGrid
+          kpis={kpis}
+          diffDays={dateWindows.diffDays}
+          onCardClick={() => setDrillDownLead(relationalLeads[0])}
+        />
 
-            <LeadAnalyticsSection
-              curr={curr}
-              dailyTrends={dailyTrends}
-              sourceBreakdown={sourceBreakdown}
-              onDrillDown={() => setActiveTab('relational')}
-            />
+        <LeadAnalyticsSection
+          kpis={kpis}
+          dailyLeadTrend={dailyLeadTrend}
+          leadSources={leadSources}
+          onDrillDown={() => setDrillDownLead(relationalLeads[0])}
+        />
 
-            <QuotationAnalyticsSection
-              curr={curr}
-              serviceAnalytics={serviceAnalytics}
-              onViewLeadHistory={() => setActiveTab('relational')}
-            />
+        <QuotationAnalyticsSection
+          kpis={kpis}
+          quoteCategories={quoteCategories}
+          quoteFunnel={quoteFunnel}
+          serviceQuoteDetails={serviceQuoteDetails}
+          onRowClick={() => setDrillDownLead(relationalLeads[0])}
+        />
 
-            <DealsRevenueSection
-              curr={curr}
-              serviceAnalytics={serviceAnalytics}
-              dailyTrends={dailyTrends}
-            />
+        <DealsRevenueSection
+          kpis={kpis}
+          dealServiceBars={dealServiceBars}
+          revenueCategories={revenueCategories}
+          priorityRows={priorityRows}
+          dailyRevenueBars={dailyRevenueBars}
+        />
 
-            <OperationsPaymentsSection
-              currentLeads={currentLeads}
-              curr={curr}
-              serviceAnalytics={serviceAnalytics}
-              filteredActivities={filteredActivities}
-              onOpenRecordDrillDown={openRecordDrillDown}
-            />
-          </>
-        )}
+        <OperationsPaymentsSection
+          salesTeam={salesTeam}
+          opsTeam={opsTeam}
+          orderStages={orderStages}
+          crmActivities={crmActivities}
+          onOpenRecordDrillDown={openRecordDrillDown}
+        />
       </main>
 
-      <DrillDownModal lead={drillDownLead} onClose={() => setDrillDownLead(null)} />
+      <DrillDownModal
+        lead={drillDownLead}
+        allLeads={relationalLeads}
+        onSelectLead={setDrillDownLead}
+        onClose={() => setDrillDownLead(null)}
+      />
     </div>
   );
 }

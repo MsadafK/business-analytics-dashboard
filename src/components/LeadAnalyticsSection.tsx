@@ -1,293 +1,321 @@
 import React from 'react';
-import { TrendingUp } from 'lucide-react';
+import { Target } from 'lucide-react';
 import type {
-  AggregatedMetrics,
-  DailyTrendItem,
-  SourceBreakdownItem,
+  KpiMetrics,
+  DailyLeadPoint,
+  LeadSourceItem,
 } from '../types/analytics';
-import { MONTHLY_TARGET } from '../data/mockData';
 import { formatINR } from '../utils/formatters';
 
 interface LeadAnalyticsSectionProps {
-  curr: AggregatedMetrics;
-  dailyTrends: DailyTrendItem[];
-  sourceBreakdown: SourceBreakdownItem[];
+  kpis: KpiMetrics;
+  dailyLeadTrend: DailyLeadPoint[];
+  leadSources: LeadSourceItem[];
   onDrillDown: () => void;
 }
 
 export const LeadAnalyticsSection: React.FC<LeadAnalyticsSectionProps> = ({
-  curr,
-  dailyTrends,
-  sourceBreakdown,
+  kpis,
+  dailyLeadTrend,
+  leadSources,
   onDrillDown,
 }) => {
-  const targetAchievedPct = Math.min(
-    100,
-    Number(((curr.collectedRevenue / MONTHLY_TARGET) * 100).toFixed(1))
-  );
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-3.5">
       {/* 1. Target Achievement */}
-      <div className="xl:col-span-3 bg-white rounded-xl border border-slate-200 p-4 shadow-2xs flex flex-col justify-between">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
-            <TrendingUp className="w-4 h-4" />
-          </div>
-          <h3 className="text-sm font-bold text-slate-800">Target Achievement</h3>
+      <div className="xl:col-span-3 bg-white rounded-xl border border-slate-200/80 p-4 shadow-2xs flex flex-col justify-between">
+        <div className="flex items-center gap-1.5 mb-2">
+          <Target className="w-4 h-4 text-blue-600" />
+          <h3 className="text-xs font-bold text-slate-800">Target Achievement</h3>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 my-3">
-          <div className="flex-1 space-y-2 min-w-0">
-            <div className="text-[11px] text-slate-500">Monthly Revenue Target</div>
-            <div className="text-xl font-extrabold text-slate-900">{formatINR(MONTHLY_TARGET)}</div>
+        <div className="grid grid-cols-12 gap-2 items-center my-auto">
+          {/* Left Numbers */}
+          <div className="col-span-6 space-y-1.5">
+            <div className="text-[10px] text-slate-400">Monthly Revenue Target</div>
+            <div className="text-xl font-extrabold text-slate-900">
+              {formatINR(kpis.monthlyTarget)}
+            </div>
 
-            <div className="space-y-1.5 pt-2 border-t border-slate-100 text-xs">
-              <div className="flex items-center justify-between gap-2">
-                <span className="flex items-center gap-1.5 text-slate-600">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>Achieved
+            <div className="pt-2 space-y-1.5 text-[10.5px]">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-1">
+                <span className="flex items-center gap-1 text-slate-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Achieved
                 </span>
-                <div className="text-right">
-                  <span className="font-bold text-slate-800">
-                    {formatINR(curr.collectedRevenue)}
-                  </span>
-                  <span className="text-[11px] text-slate-400 ml-1.5">{targetAchievedPct}%</span>
-                </div>
+                <span className="font-bold text-slate-800">
+                  {formatINR(kpis.achievedRevenue)}
+                </span>
+                <span className="text-slate-400 text-[9.5px]">{kpis.achievedPct}%</span>
               </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="flex items-center gap-1.5 text-slate-600">
-                  <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>Remaining
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1 text-slate-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>Remaining
                 </span>
-                <div className="text-right">
-                  <span className="font-bold text-slate-800">
-                    {formatINR(Math.max(0, MONTHLY_TARGET - curr.collectedRevenue))}
-                  </span>
-                  <span className="text-[11px] text-slate-400 ml-1.5">
-                    {(100 - targetAchievedPct).toFixed(1)}%
-                  </span>
-                </div>
+                <span className="font-bold text-slate-800">
+                  {formatINR(kpis.remainingRevenue)}
+                </span>
+                <span className="text-slate-400 text-[9.5px]">{kpis.remainingPct}%</span>
               </div>
             </div>
           </div>
 
-          {/* Trapezoid Funnel Graphic */}
-          <div className="flex flex-col items-center justify-center shrink-0">
-            <div className="text-[10px] text-slate-400 mb-1.5 text-center font-medium">
-              Target vs Achieved
+          {/* Right Funnel with Callout Lines */}
+          <div className="col-span-6 flex flex-col items-center">
+            <div className="text-[9.5px] text-slate-500 font-medium mb-1">
+              Target vs Achieved (Revenue)
             </div>
-            <div className="w-28 h-28 flex flex-col items-center justify-end">
-              <div
-                className="w-28 bg-indigo-400/90 text-white text-[10px] font-semibold flex flex-col items-center justify-center shadow-2xs"
-                style={{
-                  height: '72%',
-                  clipPath: 'polygon(0 0, 100% 0, 82% 100%, 18% 100%)',
-                }}
-              >
-                <span>Remaining</span>
-                <span className="text-[9px] opacity-90">{(100 - targetAchievedPct).toFixed(1)}%</span>
-              </div>
-              <div
-                className="w-20 bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center rounded-b-md mt-0.5 shadow-2xs"
-                style={{
-                  height: '26%',
-                  clipPath: 'polygon(8% 0, 92% 0, 80% 100%, 20% 100%)',
-                }}
-              >
-                {targetAchievedPct}%
-              </div>
-            </div>
+            <svg viewBox="0 0 170 105" className="w-full h-26 overflow-visible">
+              {/* Top Indigo Trapezoid */}
+              <polygon points="10,10 75,10 66,55 19,55" fill="#6366f1" opacity="0.85" />
+              {/* Bottom Blue Trapezoid */}
+              <polygon points="19,58 66,58 56,96 29,96" fill="#2563eb" />
+
+              {/* Leader Line 1 */}
+              <line x1="70" y1="32" x2="92" y2="32" stroke="#cbd5e1" strokeWidth="1" />
+              <circle cx="95" cy="32" r="2" fill="#2563eb" />
+              <text x="100" y="30" className="text-[7px] fill-slate-500 font-semibold">
+                Remaining
+              </text>
+              <text x="100" y="39" className="text-[6.5px] fill-slate-700 font-bold">
+                ₹83,97,072 (98.8%)
+              </text>
+
+              {/* Leader Line 2 */}
+              <line x1="61" y1="77" x2="92" y2="77" stroke="#cbd5e1" strokeWidth="1" />
+              <circle cx="95" cy="77" r="2" fill="#10b981" />
+              <text x="100" y="75" className="text-[7px] fill-slate-500 font-semibold">
+                Achieved
+              </text>
+              <text x="100" y="84" className="text-[6.5px] fill-slate-700 font-bold">
+                ₹1,02,928 (1.2%)
+              </text>
+            </svg>
           </div>
         </div>
       </div>
 
       {/* 2. Lead Funnel */}
-      <div className="xl:col-span-3 bg-white rounded-xl border border-slate-200 p-4 shadow-2xs flex flex-col justify-between">
-        <h3 className="text-sm font-bold text-slate-800 mb-2">Lead Funnel</h3>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 my-auto py-1">
-          <div className="flex flex-col items-center space-y-1 w-full max-w-[180px]">
-            <div
-              onClick={onDrillDown}
-              className="w-full py-2 bg-blue-600 text-white text-center rounded-t-lg shadow-2xs cursor-pointer hover:opacity-95"
-              style={{ clipPath: 'polygon(0 0, 100% 0, 88% 100%, 12% 100%)' }}
-            >
-              <div className="text-[10px] opacity-90">New Leads</div>
-              <div className="text-xs font-extrabold">{curr.totalLeads} (100%)</div>
-            </div>
-            <div
-              onClick={onDrillDown}
-              className="w-[78%] py-2 bg-emerald-500 text-white text-center shadow-2xs cursor-pointer hover:opacity-95"
-              style={{ clipPath: 'polygon(0 0, 100% 0, 84% 100%, 16% 100%)' }}
-            >
-              <div className="text-[10px] opacity-90">Qualified</div>
-              <div className="text-xs font-extrabold">
-                {curr.qualifiedLeads} (
-                {curr.totalLeads
-                  ? ((curr.qualifiedLeads / curr.totalLeads) * 100).toFixed(1)
-                  : 0}
-                %)
-              </div>
-            </div>
-            <div
-              onClick={onDrillDown}
-              className="w-[58%] py-2 bg-amber-500 text-white text-center rounded-b-lg shadow-2xs cursor-pointer hover:opacity-95"
-            >
-              <div className="text-[10px] opacity-90">Converted</div>
-              <div className="text-xs font-extrabold">
-                {curr.convertedLeads} ({curr.conversionRate}%)
-              </div>
-            </div>
-          </div>
+      <div className="xl:col-span-3 bg-white rounded-xl border border-slate-200/80 p-4 shadow-2xs flex flex-col justify-between">
+        <h3 className="text-xs font-bold text-slate-800 mb-1">Lead Funnel</h3>
+        <div
+          onClick={onDrillDown}
+          className="flex items-center justify-center my-auto cursor-pointer"
+        >
+          <svg viewBox="0 0 260 130" className="w-full h-34 overflow-visible">
+            {/* Stage 1: New Leads */}
+            <polygon points="20,8 145,8 130,45 35,45" fill="#2563eb" />
+            <text x="82.5" y="21" textAnchor="middle" className="text-[8px] fill-white/90">
+              New Leads
+            </text>
+            <text x="82.5" y="32" textAnchor="middle" className="text-[10px] fill-white font-bold">
+              {kpis.newLeads}
+            </text>
+            <text x="82.5" y="41" textAnchor="middle" className="text-[7.5px] fill-white/80">
+              (100%)
+            </text>
 
-          <div className="border border-dashed border-indigo-300 bg-indigo-50/40 rounded-lg px-3 py-2 text-center shrink-0">
-            <div className="text-[10px] text-indigo-600 font-semibold">Unqualified</div>
-            <div className="text-sm font-extrabold text-indigo-900">{curr.unqualifiedLeads}</div>
-            <div className="text-[10px] text-indigo-500">
-              (
-              {curr.totalLeads
-                ? ((curr.unqualifiedLeads / curr.totalLeads) * 100).toFixed(1)
-                : 0}
-              %)
-            </div>
-          </div>
+            {/* Stage 2: Qualified */}
+            <polygon points="37,48 128,48 114,85 51,85" fill="#22c55e" />
+            <text x="82.5" y="61" textAnchor="middle" className="text-[8px] fill-white/90">
+              Qualified
+            </text>
+            <text x="82.5" y="72" textAnchor="middle" className="text-[10px] fill-white font-bold">
+              {kpis.qualifiedLeads}
+            </text>
+            <text x="82.5" y="81" textAnchor="middle" className="text-[7.5px] fill-white/80">
+              ({kpis.qualifiedPct}%)
+            </text>
+
+            {/* Stage 3: Converted */}
+            <polygon points="53,88 112,88 103,124 62,124" fill="#eab308" />
+            <text x="82.5" y="101" textAnchor="middle" className="text-[8px] fill-white/90">
+              Converted
+            </text>
+            <text x="82.5" y="112" textAnchor="middle" className="text-[10px] fill-white font-bold">
+              {kpis.convertedLeads}
+            </text>
+            <text x="82.5" y="121" textAnchor="middle" className="text-[7.5px] fill-white/80">
+              ({kpis.convertedPct}%)
+            </text>
+
+            {/* Dashed Connector Line from Top Stage to Unqualified Box */}
+            <polyline
+              fill="none"
+              stroke="#a5b4fc"
+              strokeWidth="1"
+              strokeDasharray="3,2"
+              points="138,26 205,26 205,58"
+            />
+
+            {/* Unqualified Box */}
+            <rect
+              x="170"
+              y="58"
+              width="70"
+              height="48"
+              rx="6"
+              fill="#f5f3ff"
+              stroke="#a5b4fc"
+              strokeWidth="1"
+              strokeDasharray="3,2"
+            />
+            <text
+              x="205"
+              y="72"
+              textAnchor="middle"
+              className="text-[7.5px] fill-indigo-600 font-semibold"
+            >
+              Unqualified
+            </text>
+            <text
+              x="205"
+              y="86"
+              textAnchor="middle"
+              className="text-[11px] fill-indigo-950 font-extrabold"
+            >
+              {kpis.unqualifiedLeads}
+            </text>
+            <text x="205" y="98" textAnchor="middle" className="text-[7.5px] fill-indigo-500">
+              ({kpis.unqualifiedPct}%)
+            </text>
+          </svg>
         </div>
       </div>
 
       {/* 3. Daily Lead Trend */}
-      <div className="xl:col-span-3 bg-white rounded-xl border border-slate-200 p-4 shadow-2xs flex flex-col justify-between">
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-          <h3 className="text-sm font-bold text-slate-800">Daily Lead Trend</h3>
-          <div className="flex items-center gap-2.5 text-[10px] font-medium">
+      <div className="xl:col-span-3 bg-white rounded-xl border border-slate-200/80 p-4 shadow-2xs flex flex-col justify-between">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <h3 className="text-xs font-bold text-slate-800">Daily Lead Trend</h3>
+          <div className="flex items-center gap-2 text-[9.5px] font-medium">
             <span className="flex items-center gap-1 text-blue-600">
-              <span className="w-2 h-2 rounded-full bg-blue-600"></span>New Leads
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>New Leads
             </span>
             <span className="flex items-center gap-1 text-emerald-600">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>Qualified
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Qualified
             </span>
-            <span className="flex items-center gap-1 text-amber-600">
-              <span className="w-2 h-2 rounded-full bg-amber-500"></span>Converted
+            <span className="flex items-center gap-1 text-amber-500">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Converted
             </span>
           </div>
         </div>
 
-        <div className="h-36 w-full pt-2">
-          {dailyTrends.length > 0 ? (
-            <svg viewBox="0 0 320 110" className="w-full h-full overflow-visible">
-              {[0, 25, 50, 75].map((y, idx) => (
-                <line key={idx} x1="0" y1={y} x2="320" y2={y} stroke="#f1f5f9" strokeWidth="1" />
-              ))}
-              {(() => {
-                const maxVal = Math.max(8, ...dailyTrends.map((d) => d.newLeads));
-                const getPts = (key: 'newLeads' | 'qualified' | 'converted') =>
-                  dailyTrends
-                    .map((d, idx) => {
-                      const x =
-                        dailyTrends.length === 1
-                          ? 160
-                          : (idx / (dailyTrends.length - 1)) * 300 + 10;
-                      const y = 85 - (d[key] / maxVal) * 70;
-                      return `${x},${y}`;
-                    })
-                    .join(' ');
+        <div className="h-34 w-full my-auto">
+          <svg viewBox="0 0 330 115" className="w-full h-full overflow-visible">
+            {/* Y-Axis Grid & Labels (120, 90, 60, 30, 0) */}
+            {[
+              { label: '120', y: 10 },
+              { label: '90', y: 30 },
+              { label: '60', y: 50 },
+              { label: '30', y: 70 },
+              { label: '0', y: 90 },
+            ].map((g) => (
+              <g key={g.label}>
+                <text x="16" y={g.y + 2.5} textAnchor="end" className="text-[7.5px] fill-slate-400">
+                  {g.label}
+                </text>
+                <line x1="22" y1={g.y} x2="322" y2={g.y} stroke="#f1f5f9" strokeWidth="1" />
+              </g>
+            ))}
 
-                return (
-                  <>
-                    <polyline
-                      fill="none"
-                      stroke="#2563eb"
-                      strokeWidth="2.2"
-                      points={getPts('newLeads')}
-                    />
-                    <polyline
-                      fill="none"
-                      stroke="#10b981"
-                      strokeWidth="2"
-                      points={getPts('qualified')}
-                    />
-                    <polyline
-                      fill="none"
-                      stroke="#f59e0b"
-                      strokeWidth="2"
-                      points={getPts('converted')}
-                    />
-                    {dailyTrends.map((d, idx) => {
-                      const x =
-                        dailyTrends.length === 1
-                          ? 160
-                          : (idx / (dailyTrends.length - 1)) * 300 + 10;
-                      return (
-                        <g key={d.date}>
-                          <circle
-                            cx={x}
-                            cy={85 - (d.newLeads / maxVal) * 70}
-                            r="2.5"
-                            fill="#2563eb"
-                          />
-                          {idx % Math.max(1, Math.floor(dailyTrends.length / 5)) === 0 && (
-                            <text
-                              x={x}
-                              y="102"
-                              textAnchor="middle"
-                              className="text-[8px] fill-slate-400"
-                            >
-                              {d.label}
-                            </text>
-                          )}
-                        </g>
-                      );
-                    })}
-                  </>
-                );
-              })()}
-            </svg>
-          ) : (
-            <div className="h-full flex items-center justify-center text-xs text-slate-400">
-              No leads in selected range
-            </div>
-          )}
+            {(() => {
+              const maxY = 120;
+              const getCoords = (key: 'newLeads' | 'qualified' | 'converted') =>
+                dailyLeadTrend.map((d, idx) => ({
+                  x: 26 + (idx / (dailyLeadTrend.length - 1)) * 292,
+                  y: 90 - (Math.min(maxY, d[key]) / maxY) * 80,
+                }));
+
+              const toSmoothPath = (pts: { x: number; y: number }[]) => {
+                if (pts.length === 0) return '';
+                let d = `M ${pts[0].x},${pts[0].y}`;
+                for (let i = 0; i < pts.length - 1; i++) {
+                  const cx = (pts[i].x + pts[i + 1].x) / 2;
+                  d += ` C ${cx},${pts[i].y} ${cx},${pts[i + 1].y} ${pts[i + 1].x},${pts[i + 1].y}`;
+                }
+                return d;
+              };
+
+              const newPts = getCoords('newLeads');
+              const qualPts = getCoords('qualified');
+              const convPts = getCoords('converted');
+
+              return (
+                <>
+                  <path d={toSmoothPath(newPts)} fill="none" stroke="#2563eb" strokeWidth="1.8" />
+                  <path d={toSmoothPath(qualPts)} fill="none" stroke="#10b981" strokeWidth="1.6" />
+                  <path d={toSmoothPath(convPts)} fill="none" stroke="#f59e0b" strokeWidth="1.5" />
+
+                  {dailyLeadTrend.map((d, idx) => {
+                    const x = 26 + (idx / (dailyLeadTrend.length - 1)) * 292;
+                    return (
+                      <g key={d.label}>
+                        <circle cx={x} cy={newPts[idx].y} r="2" fill="#2563eb" />
+                        <circle cx={x} cy={qualPts[idx].y} r="1.8" fill="#10b981" />
+                        <circle cx={x} cy={convPts[idx].y} r="1.8" fill="#f59e0b" />
+                        <text x={x} y="104" textAnchor="middle" className="text-[7px] fill-slate-400">
+                          {d.label}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </>
+              );
+            })()}
+          </svg>
         </div>
       </div>
 
       {/* 4. Lead Sources */}
-      <div className="xl:col-span-3 bg-white rounded-xl border border-slate-200 p-4 shadow-2xs flex flex-col justify-between">
-        <h3 className="text-sm font-bold text-slate-800 mb-2">Lead Sources</h3>
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 my-auto">
+      <div className="xl:col-span-3 bg-white rounded-xl border border-slate-200/80 p-4 shadow-2xs flex flex-col justify-between">
+        <h3 className="text-xs font-bold text-slate-800 mb-2">Lead Sources</h3>
+        <div className="flex items-center justify-between gap-3 my-auto">
           <div className="relative w-28 h-28 flex items-center justify-center shrink-0">
-            <svg viewBox="0 0 36 36" className="w-28 h-28 -rotate-90">
-              <circle cx="18" cy="18" r="14" fill="none" stroke="#f1f5f9" strokeWidth="5" />
-              {(() => {
-                let accum = 0;
-                return sourceBreakdown.map((s) => {
-                  const dash = `${s.pct} ${100 - s.pct}`;
-                  const offset = 100 - accum;
-                  accum += s.pct;
-                  return (
-                    <circle
-                      key={s.source}
-                      cx="18"
-                      cy="18"
-                      r="14"
-                      fill="none"
-                      stroke={s.color}
-                      strokeWidth="5"
-                      strokeDasharray={dash}
-                      strokeDashoffset={offset}
-                    />
-                  );
-                });
-              })()}
+            <svg viewBox="0 0 42 42" className="w-28 h-28 -rotate-90 overflow-visible">
+              <circle cx="21" cy="21" r="15.915" fill="none" stroke="#f1f5f9" strokeWidth="5.5" />
+              <circle
+                cx="21"
+                cy="21"
+                r="15.915"
+                fill="none"
+                stroke="#2563eb"
+                strokeWidth="5.5"
+                strokeDasharray="76.9 23.1"
+                strokeDashoffset="100"
+              />
+              <circle
+                cx="21"
+                cy="21"
+                r="15.915"
+                fill="none"
+                stroke="#10b981"
+                strokeWidth="5.5"
+                strokeDasharray="23.1 76.9"
+                strokeDashoffset="23.1"
+              />
             </svg>
+            {/* Ring Badges (77% and 23%) */}
+            <span className="absolute -bottom-0.5 left-1 bg-blue-700 text-white text-[8px] font-bold px-1 py-0.2 rounded shadow-2xs">
+              77%
+            </span>
+            <span className="absolute top-1 left-2 bg-emerald-600 text-white text-[8px] font-bold px-1 py-0.2 rounded shadow-2xs">
+              23%
+            </span>
+
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-              <span className="text-sm font-extrabold text-slate-900">{curr.totalLeads}</span>
-              <span className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">
-                Total Leads
+              <div className="flex items-baseline gap-0.5">
+                <span className="text-sm font-extrabold text-slate-900">{kpis.newLeads}</span>
+                <span className="text-[7px] font-bold text-slate-500 uppercase">TOTAL</span>
+              </div>
+              <span className="text-[7px] uppercase tracking-wider text-slate-400 font-semibold -mt-0.5">
+                LEADS
               </span>
             </div>
           </div>
 
-          <div className="w-full flex-1 space-y-2 text-xs">
-            {sourceBreakdown.map((s) => (
+          <div className="flex-1 space-y-2 text-[11px]">
+            {leadSources.map((s) => (
               <div key={s.source} className="flex items-center justify-between gap-2">
-                <span className="flex items-center gap-1.5 text-slate-600 truncate">
+                <span className="flex items-center gap-1.5 text-slate-600">
                   <span
                     className="w-2 h-2 rounded-full shrink-0"
                     style={{ backgroundColor: s.color }}

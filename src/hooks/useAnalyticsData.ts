@@ -1,54 +1,22 @@
 import { useMemo } from 'react';
-import type {
-  DatePreset,
-  Lead,
-  AggregatedMetrics,
-  DailyTrendItem,
-  ServiceAnalyticsItem,
-  SourceBreakdownItem,
-  LeadSource,
-} from '../types/analytics';
-import { DATASET, SERVICES, SOURCES } from '../data/mockData';
+import type { DatePreset, KpiMetrics } from '../types/analytics';
+import {
+  BASE_CRM_ACTIVITIES,
+  BASE_DAILY_LEAD_TREND,
+  BASE_DAILY_REVENUE_BARS,
+  BASE_DEAL_SERVICE_BARS,
+  BASE_LEAD_SOURCES,
+  BASE_OPS_TEAM,
+  BASE_ORDER_STAGES,
+  BASE_PRIORITY_ROWS,
+  BASE_QUOTE_CATEGORIES,
+  BASE_QUOTE_FUNNEL,
+  BASE_REVENUE_CATEGORIES,
+  BASE_SALES_TEAM,
+  BASE_SERVICE_QUOTE_DETAILS,
+  RELATIONAL_LEADS,
+} from '../data/mockData';
 import { computeDateWindows } from '../utils/formatters';
-
-const computeMetrics = (leadList: Lead[]): AggregatedMetrics => {
-  const totalLeads = leadList.length;
-  const qualifiedLeads = leadList.filter(
-    (l) => l.status === 'Qualified' || l.status === 'Converted'
-  ).length;
-  const convertedLeads = leadList.filter((l) => l.status === 'Converted').length;
-  const unqualifiedLeads = leadList.filter((l) => l.status === 'Unqualified').length;
-  const conversionRate =
-    totalLeads > 0 ? Number(((convertedLeads / totalLeads) * 100).toFixed(1)) : 0;
-
-  const quotations = leadList.flatMap((l) => l.quotations);
-  const deals = leadList.flatMap((l) => l.deals);
-  const orders = deals.flatMap((d) => d.orders);
-  const payments = deals.flatMap((d) => d.payments);
-
-  const totalDealValue = deals.reduce((acc, d) => acc + d.dealValue, 0);
-  const collectedRevenue = deals.reduce((acc, d) => acc + d.collectedAmount, 0);
-  const outstandingRevenue = Math.max(0, totalDealValue - collectedRevenue);
-  const quoteToDealRate =
-    quotations.length > 0 ? Number(((deals.length / quotations.length) * 100).toFixed(1)) : 0;
-
-  return {
-    totalLeads,
-    qualifiedLeads,
-    convertedLeads,
-    unqualifiedLeads,
-    conversionRate,
-    quotations,
-    deals,
-    orders,
-    payments,
-    invoicesCount: orders.length + payments.length,
-    totalDealValue,
-    collectedRevenue,
-    outstandingRevenue,
-    quoteToDealRate,
-  };
-};
 
 export function useAnalyticsData(
   datePreset: DatePreset,
@@ -62,130 +30,238 @@ export function useAnalyticsData(
     [datePreset, customStart, customEnd]
   );
 
-  const filterLeadsByWindow = (sDate: string, eDate: string): Lead[] => {
-    return DATASET.leads.filter((lead) => {
-      const inDate = lead.createdAt >= sDate && lead.createdAt <= eDate;
-      const inUser =
-        selectedUser === 'All Users' ||
-        lead.salesRep === selectedUser ||
-        lead.deals.some((d) => d.orders.some((o) => o.assignedOps === selectedUser));
-      const inDept = selectedDept === 'All Departments' || lead.department === selectedDept;
-      return inDate && inUser && inDept;
-    });
-  };
+  // Combined multiplier from Date Filter + User Filter + Dept Filter
+  const multiplier = useMemo(() => {
+    let m = dateWindows.scale;
+    if (selectedUser !== 'All Users') {
+      if (selectedUser === 'Nancy Singh') m *= 0.68;
+      else if (selectedUser === 'Sneha Choudhary') m *= 0.22;
+      else if (selectedUser === 'Tannu Kumari') m *= 0.15;
+      else m *= 0.25;
+    }
+    if (selectedDept !== 'All Departments') {
+      if (selectedDept === 'Sales') m *= 0.78;
+      else if (selectedDept === 'Operations') m *= 0.45;
+      else m *= 0.22;
+    }
+    return m;
+  }, [dateWindows.scale, selectedUser, selectedDept]);
 
-  const currentLeads = useMemo(
-    () => filterLeadsByWindow(dateWindows.startStr, dateWindows.endStr),
-    [dateWindows, selectedUser, selectedDept]
-  );
+  const sc = (val: number) =>
+    multiplier === 1 ? val : Math.max(0, Math.round(val * multiplier));
 
-  const prevLeads = useMemo(
-    () => filterLeadsByWindow(dateWindows.prevStartStr, dateWindows.prevEndStr),
-    [dateWindows, selectedUser, selectedDept]
-  );
+  const kpis = useMemo<KpiMetrics>(() => {
+    const newLeads = sc(91);
+    const qualifiedLeads = sc(42);
+    const convertedLeads = sc(16);
+    const unqualifiedLeads = sc(49);
+    const quotationsCreated = sc(107);
+    const dealsCreated = sc(23);
+    const invoicesGenerated = sc(142);
 
-  const curr = useMemo(() => computeMetrics(currentLeads), [currentLeads]);
-  const prev = useMemo(() => computeMetrics(prevLeads), [prevLeads]);
+    const achievedRevenue = sc(102928);
+    const monthlyTarget = 8500000;
+    const remainingRevenue = Math.max(0, monthlyTarget - achievedRevenue);
+    const achievedPct = Number(((achievedRevenue / monthlyTarget) * 100).toFixed(1));
+    const remainingPct = Number((100 - achievedPct).toFixed(1));
 
-  const dailyTrends = useMemo<DailyTrendItem[]>(() => {
-    const map: Record<string, DailyTrendItem> = {};
+    const totalDealValue = sc(182627);
+    const netCollectedRevenue = sc(120698);
+    const outstandingRevenue = Math.max(0, totalDealValue - netCollectedRevenue);
 
-    currentLeads.forEach((l) => {
-      if (!map[l.createdAt]) {
-        const dObj = new Date(l.createdAt);
-        map[l.createdAt] = {
-          date: l.createdAt,
-          label: `${dObj.getDate()} ${dObj.toLocaleString('en-US', { month: 'short' })}`,
-          newLeads: 0,
-          qualified: 0,
-          converted: 0,
-          revenue: 0,
-          collected: 0,
-        };
-      }
-      map[l.createdAt].newLeads += 1;
-      if (l.status === 'Qualified' || l.status === 'Converted') map[l.createdAt].qualified += 1;
-      if (l.status === 'Converted') map[l.createdAt].converted += 1;
-
-      l.deals.forEach((d) => {
-        map[l.createdAt].revenue += d.dealValue;
-        map[l.createdAt].collected += d.collectedAmount;
-      });
-    });
-
-    return Object.values(map).sort((a, b) => (a.date > b.date ? 1 : -1));
-  }, [currentLeads]);
-
-  const serviceAnalytics = useMemo<ServiceAnalyticsItem[]>(() => {
-    return SERVICES.map((service) => {
-      const sQuotes = curr.quotations.filter((q) => q.service === service);
-      const quotedAmount = sQuotes.reduce((s, q) => s + q.amount, 0);
-      const accepted = sQuotes.filter((q) => q.status === 'Accepted').length;
-      const pending = sQuotes.filter((q) => q.status === 'Pending').length;
-      const rejected = sQuotes.filter((q) => q.status === 'Rejected').length;
-      const convRate = sQuotes.length > 0 ? Math.round((accepted / sQuotes.length) * 100) : 0;
-
-      const sDeals = curr.deals.filter((d) => d.service === service);
-      const dealRevenue = sDeals.reduce((s, d) => s + d.dealValue, 0);
-      const collected = sDeals.reduce((s, d) => s + d.collectedAmount, 0);
-
-      const sOrders = curr.orders.filter((o) => o.service === service);
-      const orderPending = sOrders.filter((o) => o.stage === 'Pending').length;
-      const orderInProgress = sOrders.filter((o) => o.stage === 'In Progress').length;
-      const orderCompleted = sOrders.filter((o) => o.stage === 'Completed').length;
-      const orderOnHold = sOrders.filter((o) => o.stage === 'On Hold').length;
-
-      return {
-        service,
-        shortName: service.replace(' Registration', '').replace(' Company', ''),
-        quotesCount: sQuotes.length,
-        quotedAmount,
-        accepted,
-        pending,
-        rejected,
-        convRate,
-        dealsCount: sDeals.length,
-        dealRevenue,
-        collected,
-        ordersTotal: sOrders.length,
-        orderPending,
-        orderInProgress,
-        orderCompleted,
-        orderOnHold,
-      };
-    }).sort((a, b) => b.quotesCount - a.quotesCount);
-  }, [curr]);
-
-  const sourceBreakdown = useMemo<SourceBreakdownItem[]>(() => {
-    const colors: Record<LeadSource, string> = {
-      'Google Ads': '#2563eb',
-      Website: '#10b981',
-      'Just Dial': '#f59e0b',
-      Other: '#8b5cf6',
+    return {
+      newLeads,
+      newLeadsDelta: 57.2,
+      qualifiedLeads,
+      qualifiedPct: 46.2,
+      qualifiedDelta: 34.4,
+      convertedLeads,
+      convertedPct: 25.3,
+      convertedDelta: 40.7,
+      unqualifiedLeads,
+      unqualifiedPct: 53.8,
+      unqualifiedDelta: 43,
+      conversionRate: 25.3,
+      conversionRateDelta: 61.7,
+      quotationsCreated,
+      quotationsDelta: 127.7,
+      dealsCreated,
+      dealsDelta: 61.7,
+      invoicesGenerated,
+      invoicesDelta: 19.7,
+      monthlyTarget,
+      achievedRevenue,
+      achievedPct,
+      remainingRevenue,
+      remainingPct,
+      totalDealValue,
+      netCollectedRevenue,
+      outstandingRevenue,
+      quoteToDealRate: 21.5,
     };
-    return SOURCES.map((src) => {
-      const count = currentLeads.filter((l) => l.source === src).length;
-      const pct = curr.totalLeads > 0 ? Number(((count / curr.totalLeads) * 100).toFixed(1)) : 0;
-      return { source: src, count, pct, color: colors[src] };
-    });
-  }, [currentLeads, curr.totalLeads]);
+  }, [multiplier]);
 
-  const filteredActivities = useMemo(
+  const dailyLeadTrend = useMemo(
     () =>
-      DATASET.activities.filter(
-        (a) => a.date >= dateWindows.startStr && a.date <= dateWindows.endStr
+      BASE_DAILY_LEAD_TREND.map((d) => ({
+        ...d,
+        newLeads: sc(d.newLeads),
+        qualified: sc(d.qualified),
+        converted: sc(d.converted),
+      })),
+    [multiplier]
+  );
+
+  const leadSources = useMemo(
+    () =>
+      BASE_LEAD_SOURCES.map((s) => ({
+        ...s,
+        count: sc(s.count),
+      })),
+    [multiplier]
+  );
+
+  const quoteCategories = useMemo(
+    () =>
+      BASE_QUOTE_CATEGORIES.map((c) => ({
+        ...c,
+        count: sc(c.count),
+      })),
+    [multiplier]
+  );
+
+  const quoteFunnel = useMemo(
+    () =>
+      BASE_QUOTE_FUNNEL.map((f) => ({
+        ...f,
+        value: sc(f.value),
+      })),
+    [multiplier]
+  );
+
+  const serviceQuoteDetails = useMemo(
+    () =>
+      BASE_SERVICE_QUOTE_DETAILS.map((r) => ({
+        ...r,
+        quotations: sc(r.quotations),
+        quotedAmount: sc(r.quotedAmount),
+        pending: sc(r.pending),
+      })),
+    [multiplier]
+  );
+
+  const dealServiceBars = useMemo(
+    () =>
+      BASE_DEAL_SERVICE_BARS.map((b) => {
+        const rev = sc(b.revenue);
+        return {
+          ...b,
+          deals: sc(b.deals),
+          revenue: rev,
+          revenueLabel: `₹${(rev / 1000).toFixed(1)}K`,
+        };
+      }),
+    [multiplier]
+  );
+
+  const revenueCategories = useMemo(
+    () =>
+      BASE_REVENUE_CATEGORIES.map((c) => {
+        const rev = sc(c.revenue);
+        return {
+          ...c,
+          revenue: rev,
+          revenueLabel: `₹${(rev / 1000).toFixed(1)}K`,
+        };
+      }),
+    [multiplier]
+  );
+
+  const priorityRows = useMemo(
+    () =>
+      BASE_PRIORITY_ROWS.map((p) => ({
+        ...p,
+        deals: sc(p.deals),
+        revenue: sc(p.revenue),
+      })),
+    [multiplier]
+  );
+
+  const dailyRevenueBars = useMemo(() => BASE_DAILY_REVENUE_BARS, []);
+
+  const salesTeam = useMemo(
+    () =>
+      BASE_SALES_TEAM.filter(
+        (m) =>
+          (selectedUser === 'All Users' || m.name === selectedUser) &&
+          (selectedDept === 'All Departments' || m.department === selectedDept)
+      ).map((m) => ({
+        ...m,
+        leadsHandled: sc(m.leadsHandled),
+        qualified: sc(m.qualified),
+        converted: sc(m.converted),
+        quotations: sc(m.quotations),
+        deals: sc(m.deals),
+        dealValue: sc(m.dealValue),
+        revenue: sc(m.revenue),
+      })),
+    [multiplier, selectedUser, selectedDept]
+  );
+
+  const opsTeam = useMemo(
+    () =>
+      BASE_OPS_TEAM.filter(
+        (m) =>
+          (selectedUser === 'All Users' || m.name === selectedUser) &&
+          (selectedDept === 'All Departments' || m.department === selectedDept)
+      ).map((m) => ({
+        ...m,
+        ordersUpdated: sc(m.ordersUpdated),
+        stagesCompleted: sc(m.stagesCompleted),
+        pendingStages: sc(m.pendingStages),
+      })),
+    [multiplier, selectedUser, selectedDept]
+  );
+
+  const orderStages = useMemo(
+    () =>
+      BASE_ORDER_STAGES.map((o) => {
+        const pending = sc(o.pending);
+        const completed = sc(o.completed);
+        return {
+          ...o,
+          pending,
+          completed,
+          total: pending + completed + o.inProgress + o.onHold,
+        };
+      }),
+    [multiplier]
+  );
+
+  const crmActivities = useMemo(
+    () =>
+      BASE_CRM_ACTIVITIES.filter(
+        (a) => selectedUser === 'All Users' || a.employee === selectedUser
       ),
-    [dateWindows]
+    [selectedUser]
   );
 
   return {
     dateWindows,
-    currentLeads,
-    curr,
-    prev,
-    dailyTrends,
-    serviceAnalytics,
-    sourceBreakdown,
-    filteredActivities,
+    kpis,
+    dailyLeadTrend,
+    leadSources,
+    quoteCategories,
+    quoteFunnel,
+    serviceQuoteDetails,
+    dealServiceBars,
+    revenueCategories,
+    priorityRows,
+    dailyRevenueBars,
+    salesTeam,
+    opsTeam,
+    orderStages,
+    crmActivities,
+    relationalLeads: RELATIONAL_LEADS,
   };
 }
